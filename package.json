@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint src/",
-    "build": "npx tsc",
+    "build": "yarn proto && npx tsc",
     "start": "node dist/index.js",
-    "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/index.js\"",
+    "dev": "concurrently \"yarn build\" \"nodemon -q dist/index.js\"",
     "proto": "npx protoc --ts_out ./src/protobuf --proto_path ./protobuf ./protobuf/*"
   },
   "keywords": [
