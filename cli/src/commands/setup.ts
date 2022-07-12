@@ -1,14 +1,15 @@
 import {Command, Flags} from '@oclif/core'
-import {readFileSync} from 'node:fs'
+import {readFileSync, writeFileSync} from 'node:fs'
 import {CryptoSigner} from 'm10-sdk/out/utils'
 import {LedgerClient} from 'm10-sdk/out/client'
 import {Collection} from 'm10-sdk/out/collections'
 import {m10} from 'm10-sdk/protobufs'
-import {randomUUID} from 'node:crypto'
+import {randomUUID, generateKeyPairSync} from 'node:crypto'
 import * as uuid from 'uuid'
 
+// m10_usd.pkcs8
 const currencyPublicKey = '1oFEgUWFBVthmUNaaBDEmJB+0hE94+kQiI9Asadyfn4='
-const roleName = 'fx-pvp-agent'
+const roleName = 'conditional-payment-manager'
 
 export default class Setup extends Command {
   static description = 'Setup the M10-FX identities'
@@ -49,9 +50,6 @@ export default class Setup extends Command {
     const bankAccounts = await (await client.listAccounts(keyPair, {owner: Buffer.from(currencyPublicKey, 'base64')})).accounts
     this.log(`Known bank accounts: ${JSON.stringify(bankAccounts, null, 4)}`)
 
-    /// Generate keypair
-    const accountKeyPair = CryptoSigner.generateKeyPair()
-
     /// RBAC rules
     const rules: m10.sdk.Rule[] = [
       /// Allows reading & committing transfers on transfers between bank accounts
@@ -70,6 +68,11 @@ export default class Setup extends Command {
       this.log(`Role ${roleName} already exists:\n${JSON.stringify(roles.roles, null, 4)}`)
       return
     }
+
+    /// Generate keypair
+    const {privateKey} = generateKeyPairSync('ed25519')
+    const exportedAccountKeyPair = privateKey.export({type: 'pkcs8', format: 'pem'})
+    const accountKeyPair = new CryptoSigner(exportedAccountKeyPair)
 
     /// Create role for the rules
     const roleId = randomUUID()
@@ -111,5 +114,9 @@ export default class Setup extends Command {
     if (response.error) {
       this.log(`Could not create role / role-binding ${roleId}: ${JSON.stringify(response.error, null, 4)}`)
     }
+
+    const keyPairFile = './key_pair.pkcs8'
+    writeFileSync('./key_pair.pkcs8', exportedAccountKeyPair)
+    this.log(`>>> Wrote keypair to (${keyPairFile}):\n${accountKeyPair.getPublicKey().toString('base64')}`)
   }
 }
