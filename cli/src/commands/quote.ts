@@ -1,0 +1,61 @@
+import {Command, Flags} from '@oclif/core'
+import {LedgerClient} from 'm10-sdk/out/client'
+import {FxAgreement, FxAmount, FxQuote} from '../protobuf/metadata'
+import {m10} from 'm10-sdk/protobufs'
+import {keyPairFromFlags} from '../utils'
+
+// M10 EUR
+const quotePublisherAccountId = '04000000000000000000000000000000'
+
+export default class Quote extends Command {
+  static description = 'Publishes an FxAgreement for B of currency b -> T of currency t'
+
+  static examples = [
+    '<%= config.bin %> <%= command.id %>',
+  ]
+
+  static flags = {
+    baseCurrency: Flags.string({char: 'b', description: 'base currency name', required: true}),
+    targetCurrency: Flags.string({char: 't', description: 'target currency name', required: true}),
+    baseAmount: Flags.integer({char: 'B', description: 'base amount', required: true}),
+    targetAmount: Flags.integer({char: 'T', description: 'target amount', required: true}),
+    ledger: Flags.string({char: 's', description: 'ledger identifier', required: true}),
+    keyPairPath: Flags.string({char: 'f', description: 'Path to a PKCS8 file'}),
+    keyPair: Flags.string({char: 'k', description: 'Base64 encoded PKCS8'}),
+  }
+
+  static args = []
+
+  public async run(): Promise<void> {
+    const {flags} = await this.parse(Quote)
+
+    const keyPair = keyPairFromFlags(flags.keyPairPath, flags.keyPair)
+    if (!keyPair) {
+      this.log('expected either -p or -k arguments')
+      return
+    }
+
+    // Create FX agreement
+    const base = FxAmount.create({amount: BigInt(flags.baseAmount), currency: flags.baseCurrency, ledger: flags.ledger})
+    const target = FxAmount.create({amount: BigInt(flags.targetAmount), currency: flags.targetCurrency, ledger: flags.ledger})
+    const quote = FxQuote.create({base, target})
+    const serializedQuote = FxQuote.toBinary(quote)
+    const agreement = FxAgreement.create({quote: serializedQuote, signatures: [keyPair.getSignature(serializedQuote)]})
+
+    // Publish to ledger
+    const client = new LedgerClient(flags.ledger, true)
+    const publishAgreement = new m10.sdk.transaction.Action({
+      name: 'm10.fx-agreement',
+      fromAccount: Buffer.from(quotePublisherAccountId, 'hex'),
+      // Note: Target::AnyAccount is not yet published to the SDK, so use relevant observing account
+      target: {accountId: Buffer.from('00000000000000000000000000000000', 'hex')},
+      payload: FxAgreement.toBinary(agreement),
+    })
+    const transactionData = new m10.sdk.transaction.TransactionData({invokeAction: publishAgreement})
+    const transactionRequestPayload = client.transactionRequest(transactionData)
+    const response = await client.createTransaction(keyPair, transactionRequestPayload)
+    if (response.error !== null) {
+      this.log(`Could not commit transfer id: ${JSON.stringify(response.error)}`)
+    }
+  }
+}

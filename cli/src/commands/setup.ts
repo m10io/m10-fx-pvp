@@ -1,11 +1,12 @@
 import {Command, Flags} from '@oclif/core'
-import {readFileSync, writeFileSync} from 'node:fs'
+import {writeFileSync} from 'node:fs'
 import {CryptoSigner} from 'm10-sdk/out/utils'
 import {LedgerClient} from 'm10-sdk/out/client'
 import {Collection} from 'm10-sdk/out/collections'
 import {m10} from 'm10-sdk/protobufs'
 import {randomUUID, generateKeyPairSync} from 'node:crypto'
 import * as uuid from 'uuid'
+import {keyPairFromFlags} from '../utils'
 
 // m10_usd.pkcs8
 const currencyPublicKey = '1oFEgUWFBVthmUNaaBDEmJB+0hE94+kQiI9Asadyfn4='
@@ -32,13 +33,8 @@ export default class Setup extends Command {
 
     const client = new LedgerClient(flags.server, true)
 
-    let keyPair: CryptoSigner | null
-    if (flags.keyPairPath) {
-      const data = readFileSync(flags.keyPairPath, {encoding: 'base64'})
-      keyPair = CryptoSigner.getSignerFromPkcs8V2(data)
-      this.setup(client, keyPair)
-    } else if (flags.keyPair) {
-      keyPair = CryptoSigner.getSignerFromPkcs8V2(flags.keyPair)
+    const keyPair = keyPairFromFlags(flags.keyPairPath, flags.keyPair)
+    if (keyPair) {
       this.setup(client, keyPair)
     } else {
       this.log('expected either -p or -k arguments')

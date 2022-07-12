@@ -711,6 +711,11 @@
   dependencies:
     "@octokit/openapi-types" "^12.7.0"
 
+"@protobuf-ts/runtime@^2.7.0":
+  version "2.7.0"
+  resolved "https://registry.yarnpkg.com/@protobuf-ts/runtime/-/runtime-2.7.0.tgz#108252b9935018bd7eb9c0d4a349b8db11e382f7"
+  integrity sha512-CzunTplg81oMkF9MnSYiX2WOdHnAyHKnokZncgOHm5bt8iEfFNnUsMSbsWUus/ulRNIZ9VAVMjutd96vmySQaw==
+
 "@protobufjs/aspromise@^1.1.1", "@protobufjs/aspromise@^1.1.2":
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@protobufjs/aspromise/-/aspromise-1.1.2.tgz#9b8b0cc663d669a7d8f6f5d0893a14d348f30fbf"

@@ -54,11 +54,11 @@ export interface FxAmount {
      */
     amount: bigint;
     /**
-     * M10 Ledger account ID
+     * Currency shorthand, e.g. 'USD'
      *
-     * @generated from protobuf field: bytes account_id = 2;
+     * @generated from protobuf field: string currency = 2;
      */
-    accountId: Uint8Array;
+    currency: string;
     /**
      * M10 Ledger identifier
      *
@@ -216,12 +216,12 @@ class FxAmount$Type extends MessageType<FxAmount> {
     constructor() {
         super("m10.pvp.metadata.FxAmount", [
             { no: 1, name: "amount", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ },
-            { no: 2, name: "account_id", kind: "scalar", T: 12 /*ScalarType.BYTES*/ },
+            { no: 2, name: "currency", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 3, name: "ledger", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
         ]);
     }
     create(value?: PartialMessage<FxAmount>): FxAmount {
-        const message = { amount: 0n, accountId: new Uint8Array(0), ledger: "" };
+        const message = { amount: 0n, currency: "", ledger: "" };
         globalThis.Object.defineProperty(message, MESSAGE_TYPE, { enumerable: false, value: this });
         if (value !== undefined)
             reflectionMergePartial<FxAmount>(this, message, value);
@@ -235,8 +235,8 @@ class FxAmount$Type extends MessageType<FxAmount> {
                 case /* uint64 amount */ 1:
                     message.amount = reader.uint64().toBigInt();
                     break;
-                case /* bytes account_id */ 2:
-                    message.accountId = reader.bytes();
+                case /* string currency */ 2:
+                    message.currency = reader.string();
                     break;
                 case /* string ledger */ 3:
                     message.ledger = reader.string();
@@ -256,9 +256,9 @@ class FxAmount$Type extends MessageType<FxAmount> {
         /* uint64 amount = 1; */
         if (message.amount !== 0n)
             writer.tag(1, WireType.Varint).uint64(message.amount);
-        /* bytes account_id = 2; */
-        if (message.accountId.length)
-            writer.tag(2, WireType.LengthDelimited).bytes(message.accountId);
+        /* string currency = 2; */
+        if (message.currency !== "")
+            writer.tag(2, WireType.LengthDelimited).string(message.currency);
         /* string ledger = 3; */
         if (message.ledger !== "")
             writer.tag(3, WireType.LengthDelimited).string(message.ledger);

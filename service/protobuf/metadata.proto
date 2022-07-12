@@ -17,8 +17,8 @@ message FxQuote {
 message FxAmount {
     // Value
     uint64 amount = 1;
-    // M10 Ledger account ID
-    bytes account_id = 2;
+    // Currency shorthand, e.g. 'USD'
+    string currency = 2;
     // M10 Ledger identifier
     string ledger = 3;
 }

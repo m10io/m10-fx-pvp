@@ -58,11 +58,17 @@ class M10Ledger {
   }
 
   // TODO: Ensure restarts occur from a persisted starting point. Might be slow to catch up otherwise
-  observeTransfers(onTransfer: TransferCallback) {
+  async observeTransfers(onTransfer: TransferCallback) {
     this.service?.end();
+
+    const ownedAccounts = (await this.client.listAccounts(this.keyPair, { owner: this.keyPair.getPublicKey() })).accounts ?? [];
+    for (const account of ownedAccounts) {
+      this.log.info(`Owned account: ${account.name} => ${Buffer.from(account.id as Uint8Array).toString('hex')}`);
+    }
+
     this.log.info(`Observing transfers`);
     const [service, start] = this.client.getObserveTransfers(this.keyPair, {
-      involvedAccounts: [Uint8Array.from(Buffer.from(this.accountId, 'hex'))],
+      involvedAccounts: ownedAccounts?.map(account => account.id as Uint8Array),
     });
     service.on('data', async finalized => {
       for await (const tx of finalized.transactions) {
