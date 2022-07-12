@@ -11,7 +11,7 @@ export default class Quote extends Command {
   static description = 'Publishes an FxAgreement for B of currency b -> T of currency t'
 
   static examples = [
-    '<%= config.bin %> <%= command.id %>',
+    'quote -b usd -B 100 -t eur -T 95 -l develop.m10.net -f ./m10_usd.pkcs8',
   ]
 
   static flags = {
@@ -36,8 +36,8 @@ export default class Quote extends Command {
     }
 
     // Create FX agreement
-    const base = FxAmount.create({amount: BigInt(flags.baseAmount), currency: flags.baseCurrency, ledger: flags.ledger})
-    const target = FxAmount.create({amount: BigInt(flags.targetAmount), currency: flags.targetCurrency, ledger: flags.ledger})
+    const base = FxAmount.create({amount: BigInt(flags.baseAmount), currency: flags.baseCurrency.toLowerCase(), ledger: flags.ledger.toLowerCase()})
+    const target = FxAmount.create({amount: BigInt(flags.targetAmount), currency: flags.targetCurrency.toLowerCase(), ledger: flags.ledger.toLowerCase()})
     const quote = FxQuote.create({base, target})
     const serializedQuote = FxQuote.toBinary(quote)
     const agreement = FxAgreement.create({quote: serializedQuote, signatures: [keyPair.getSignature(serializedQuote)]})
