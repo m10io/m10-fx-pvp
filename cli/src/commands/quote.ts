@@ -20,7 +20,7 @@ export default class Quote extends Command {
     targetCurrency: Flags.string({char: 't', description: 'target currency name', required: true}),
     baseAmount: Flags.integer({char: 'B', description: 'base amount', required: true}),
     targetAmount: Flags.integer({char: 'T', description: 'target amount', required: true}),
-    ledger: Flags.string({char: 's', description: 'ledger identifier', required: true}),
+    ledger: Flags.string({char: 's', description: 'ledger address', required: true}),
     keyPairPath: Flags.string({char: 'f', description: 'Path to a PKCS8 file'}),
     keyPair: Flags.string({char: 'k', description: 'Base64 encoded PKCS8'}),
   }
@@ -37,8 +37,8 @@ export default class Quote extends Command {
     }
 
     // Create FX agreement
-    const base = FxAmount.create({amount: BigInt(flags.baseAmount), currency: flags.baseCurrency.toLowerCase(), ledger: flags.ledger.toLowerCase()})
-    const target = FxAmount.create({amount: BigInt(flags.targetAmount), currency: flags.targetCurrency.toLowerCase(), ledger: flags.ledger.toLowerCase()})
+    const base = FxAmount.create({amount: BigInt(flags.baseAmount), currency: flags.baseCurrency.toLowerCase(), ledger: `${flags.baseCurrency.toLowerCase()}.m10`})
+    const target = FxAmount.create({amount: BigInt(flags.targetAmount), currency: flags.targetCurrency.toLowerCase(), ledger: `${flags.targetCurrency.toLowerCase()}.m10`})
     const quote = FxQuote.create({base, target})
     const serializedQuote = FxQuote.toBinary(quote)
     const agreement = FxAgreement.create({quote: serializedQuote, signatures: [keyPair.getSignature(serializedQuote)]})
