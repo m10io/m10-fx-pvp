@@ -5,15 +5,17 @@ import {m10, google} from 'm10-sdk/protobufs'
 import {keyPairFromFlags} from '../utils'
 import crypto from 'node:crypto'
 import yesno from 'yesno'
+import {getAccountIdFromUint8Array} from 'm10-sdk/out/utils/account_id'
 
 // M10 EUR
 const quotePublisherAccountId = '04000000000000000000000000000000'
+const centralBankPublicKey = '1oFEgUWFBVthmUNaaBDEmJB+0hE94+kQiI9Asadyfn4='
 
 export default class Quote extends Command {
   static description = 'Publishes an FxAgreement for baseAmount of B currency -> targetAmount of T currency'
 
   static examples = [
-    'quote -B  -b 100 -T  -t 90 -l develop.m10.net -f ./m10_usd.pkcs8',
+    'quote -B 00000000000000000000000000000001  -b 100 -T 04000000000000000000000000000001 -t 90 -l develop.m10.net -f ./m10_bm.pkcs8',
   ]
 
   static flags = {
@@ -40,33 +42,31 @@ export default class Quote extends Command {
     // Check sender & receiver
     const client = new LedgerClient(flags.ledger, true)
     const fromAccount = await client.getIndexedAccount(keyPair, {id: Buffer.from(flags.from, 'hex')})
+    this.log(`From: ${JSON.stringify(fromAccount)}`)
     const toAccount = await client.getIndexedAccount(keyPair, {id: Buffer.from(flags.to, 'hex')})
+    this.log(`To: ${JSON.stringify(toAccount)}`)
 
     // Find Central Bank accounts
     let baseCBAccount
     let targetCBAccount
-    const bankAccounts = await (await client.listAccounts(keyPair, {owner: keyPair.getPublicKey()})).accounts
+    const bankAccounts = await (await client.listAccounts(keyPair, {owner: Buffer.from(centralBankPublicKey, 'base64')})).accounts
     for await (const account of bankAccounts ?? []) {
-      if (baseCBAccount !== null && targetCBAccount !== null) {
-        break
-      }
-
       const ledgerAccount = await client.getIndexedAccount(keyPair, {id: account.id})
-      if (ledgerAccount.instrument === fromAccount.instrument) {
+      if (ledgerAccount.instrument?.code === fromAccount.instrument?.code) {
         baseCBAccount = ledgerAccount
       }
 
-      if (ledgerAccount.instrument === toAccount.instrument) {
+      if (ledgerAccount.instrument?.code === toAccount.instrument?.code) {
         targetCBAccount = ledgerAccount
       }
     }
 
-    if (baseCBAccount === null) {
-      this.error(`Currency ${fromAccount.instrument} is not supported`)
+    if (!baseCBAccount) {
+      this.error(`Currency ${fromAccount.instrument?.code} is not supported`)
     }
 
-    if (targetCBAccount === null) {
-      this.error(`Currency ${toAccount.instrument} is not supported`)
+    if (!targetCBAccount) {
+      this.error(`Currency ${toAccount.instrument?.code} is not supported`)
     }
 
     // Create FX agreement
@@ -107,6 +107,7 @@ export default class Quote extends Command {
     })
 
     if (executeBase) {
+      this.log(`Transfering ${flags.baseAmount} ${fromCurrency} via ${getAccountIdFromUint8Array(fromAccount.id as Uint8Array)} -> ${getAccountIdFromUint8Array(baseCBAccount?.id as Uint8Array)}`)
       const initiateTransfer = new m10.sdk.transaction.CreateTransfer({
         transferSteps: [
           new m10.sdk.transaction.TransferStep({

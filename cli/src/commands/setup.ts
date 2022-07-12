@@ -7,10 +7,12 @@ import {m10} from 'm10-sdk/protobufs'
 import {randomUUID, generateKeyPairSync} from 'node:crypto'
 import * as uuid from 'uuid'
 import {keyPairFromFlags} from '../utils'
+import {createAccount} from 'm10-sdk/out/helpers/accounts'
+import {getAccountIdFromUint8Array} from 'm10-sdk/out/utils/account_id'
 
 // m10_usd.pkcs8
 const currencyPublicKey = '1oFEgUWFBVthmUNaaBDEmJB+0hE94+kQiI9Asadyfn4='
-const roleName = 'conditional-payment-manager-xya'
+const roleName = 'conditional-payment-manager'
 
 export default class Setup extends Command {
   static description = 'Setup the M10-FX identities'
@@ -125,10 +127,13 @@ export default class Setup extends Command {
       if (response.error) {
         this.error(`Could not create ledger account for currency ${indexedAccount.instrument?.code}: ${JSON.stringify(response.error, null, 4)}`)
       } else {
-        this.log(`Created ${indexedAccount.instrument?.code} account: ${Buffer.from(response.accountCreated as Uint8Array).toString('hex')}`)
+        this.log(`Created ${indexedAccount.instrument?.code} account: ${getAccountIdFromUint8Array(response.accountCreated as Uint8Array)}`)
       }
 
       const accountId = response.accountCreated as Uint8Array
+      this.log(`Registering account document: ${getAccountIdFromUint8Array(accountId)}`)
+      // Register account doc
+      await createAccount(client, keyPair, getAccountIdFromUint8Array(accountId), `M10 PVP ${indexedAccount.instrument?.code}`)
 
       // Fund account
       const amount = 100_000
