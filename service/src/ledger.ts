@@ -3,6 +3,8 @@ import { CryptoSigner } from 'm10-sdk/out/utils';
 import { m10 } from 'm10-sdk/protobufs';
 import { Logger } from 'tslog';
 
+const centralBankPublicKey = '1oFEgUWFBVthmUNaaBDEmJB+0hE94+kQiI9Asadyfn4=';
+
 type TransferCallback = (contextId: Uint8Array, txId: Long, transfer: m10.sdk.transaction.ICreateTransfer) => Promise<void>;
 type IFindTransfer = {
   contextId?: Uint8Array;
@@ -61,14 +63,14 @@ class M10Ledger {
   async observeTransfers(onTransfer: TransferCallback) {
     this.service?.end();
 
-    const ownedAccounts = (await this.client.listAccounts(this.keyPair, { owner: this.keyPair.getPublicKey() })).accounts ?? [];
-    for (const account of ownedAccounts) {
+    const centralBankAccounts = (await this.client.listAccounts(this.keyPair, { owner: Buffer.from(centralBankPublicKey, 'base64') })).accounts ?? [];
+    for (const account of centralBankAccounts) {
       this.log.info(`Owned account: ${account.name} => ${Buffer.from(account.id as Uint8Array).toString('hex')}`);
     }
 
     this.log.info(`Observing transfers`);
     const [service, start] = this.client.getObserveTransfers(this.keyPair, {
-      involvedAccounts: ownedAccounts?.map(account => account.id as Uint8Array),
+      involvedAccounts: centralBankAccounts?.map(account => account.id as Uint8Array),
     });
     service.on('data', async finalized => {
       for await (const tx of finalized.transactions) {

@@ -14,9 +14,9 @@ const remoteUrl = process.env.REMOTE_LEDGER_URL || 'develop.m10.net';
 const localAccountId = process.env.LOCAL_ACCOUNT_ID || '00000000000000000000000000000000'; // USD root @ develop
 const remoteAccountId = process.env.REMOTE_ACCOUNT_ID || '04000000000000000000000000000000'; // EUR root @ develop
 const localKeyPair =
-  process.env.localKeyPair || 'MFMCAQEwBQYDK2VwBCIEIGnCNU8553Jq7aqK0zq+2YqED38MxGq4pA83mGCaDiIvoSMDIQA9E2FOITuigkjnsEK1+ggtsW8gsB1vgFNQi24Wfxr1dg==';
+  process.env.localKeyPair || 'MFMCAQEwBQYDK2VwBCIEIPTfjmouJ351G6zHdRRqzvGKPamXNjFb5cIVBN0MmqLAoSMDIQDNiOnzUfVHzu0nUeNeiqR5xXZ6j5YYFL4OWmgeG6qqKQ==';
 const remoteKeyPair =
-  process.env.remoteKeyPair || 'MFMCAQEwBQYDK2VwBCIEIHRU82MbNQwjc5hzNSL4+b1bhfswNuz34d3mW21Z8Yk2oSMDIQDu9uAH9WKNkpHrNzyIihEdkZK2dZM31Gyep94Na+RGew==';
+  process.env.remoteKeyPair || 'MFMCAQEwBQYDK2VwBCIEIPTfjmouJ351G6zHdRRqzvGKPamXNjFb5cIVBN0MmqLAoSMDIQDNiOnzUfVHzu0nUeNeiqR5xXZ6j5YYFL4OWmgeG6qqKQ==';
 
 const startService = async () => {
   // Create a connection to the local M10 ledger
