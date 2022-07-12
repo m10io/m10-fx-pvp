@@ -10,20 +10,20 @@ import {keyPairFromFlags} from '../utils'
 
 // m10_usd.pkcs8
 const currencyPublicKey = '1oFEgUWFBVthmUNaaBDEmJB+0hE94+kQiI9Asadyfn4='
-const roleName = 'conditional-payment-manager'
+const roleName = 'conditional-payment-manager-xya'
 
 export default class Setup extends Command {
   static description = 'Setup the M10-FX identities'
 
   static examples = [
-    'setup -s develop.m10.net -f ./m10_bm.pkcs8',
+    'setup -s develop.m10.net -f ./m10_root.pkcs8',
     'setup -s qa.m10.net -k MFMCAQEwBQYDK2VwBCIEIGnCNU8553Jq7aqK0zq+2YqED38MxGq4pA83mGCaDiIvoSMDIQA9E2FOITuigkjnsEK1+ggtsW8gsB1vgFNQi24Wfxr1dg==',
   ]
 
   static flags = {
     server: Flags.string({char: 's', description: 'M10 Ledger address', required: true}),
-    keyPairPath: Flags.string({char: 'f', description: 'Path to a PKCS8 file', exclusive: ['keyPair']}),
-    keyPair: Flags.string({char: 'k', description: 'Base64 encoded PKCS8', exclusive: ['keyPairPath']}),
+    keyPairPath: Flags.string({char: 'f', description: 'Path to a PKCS8 file. Needs RBAC permissions to create roles/role-bindings/accounts/transfers', exclusive: ['keyPair']}),
+    keyPair: Flags.string({char: 'k', description: 'Base64 encoded PKCS8. Needs RBAC permissions to create roles/role-bindings/accounts/transfers', exclusive: ['keyPairPath']}),
   }
 
   static args = []
@@ -61,8 +61,7 @@ export default class Setup extends Command {
     /// Check for existing roles
     const roles = await client.listRoles(keyPair, {name: roleName})
     if ((roles.roles?.length ?? 0) > 0) {
-      this.log(`Role ${roleName} already exists:\n${JSON.stringify(roles.roles, null, 4)}`)
-      return
+      this.error(`Role ${roleName} already exists:\n${JSON.stringify(roles.roles, null, 4)}`)
     }
 
     /// Generate keypair
@@ -108,11 +107,40 @@ export default class Setup extends Command {
     const transactionRequestPayload = client.transactionRequest(transactionData)
     const response = await client.createTransaction(keyPair, transactionRequestPayload)
     if (response.error) {
-      this.log(`Could not create role / role-binding ${roleId}: ${JSON.stringify(response.error, null, 4)}`)
+      this.error(`Could not create role / role-binding ${roleId}: ${JSON.stringify(response.error, null, 4)}`)
     }
 
     const keyPairFile = './key_pair.pkcs8'
     writeFileSync('./key_pair.pkcs8', exportedAccountKeyPair)
     this.log(`>>> Wrote keypair to (${keyPairFile}):\n${accountKeyPair.getPublicKey().toString('base64')}`)
+
+    // Create accounts
+    for await (const account of bankAccounts ?? []) {
+      // Create account
+      const indexedAccount = await client.getIndexedAccount(keyPair, {id: account.id})
+      const createLedgerAccount = new m10.sdk.transaction.CreateLedgerAccount({frozen: false, issuance: false, parentId: indexedAccount.id})
+      let transactionData = new m10.sdk.transaction.TransactionData({createLedgerAccount})
+      let transactionRequestPayload = client.transactionRequest(transactionData)
+      let response = await client.createTransaction(keyPair, transactionRequestPayload)
+      if (response.error) {
+        this.error(`Could not create ledger account for currency ${indexedAccount.instrument?.code}: ${JSON.stringify(response.error, null, 4)}`)
+      } else {
+        this.log(`Created ${indexedAccount.instrument?.code} account: ${Buffer.from(response.accountCreated as Uint8Array).toString('hex')}`)
+      }
+
+      const accountId = response.accountCreated as Uint8Array
+
+      // Fund account
+      const amount = 100_000
+      const fundAccount = new m10.sdk.transaction.CreateTransfer({transferSteps: [new m10.sdk.transaction.TransferStep({fromAccountId: indexedAccount.id, toAccountId: accountId, amount: amount, metadata: []})]})
+      transactionData = new m10.sdk.transaction.TransactionData({transfer: fundAccount})
+      transactionRequestPayload = client.transactionRequest(transactionData)
+      response = await client.createTransaction(keyPair, transactionRequestPayload)
+      if (response.error) {
+        this.error(`Could not fund ledger account: ${JSON.stringify(response.error, null, 4)}`)
+      } else {
+        this.log(`Funded account ${amount}`)
+      }
+    }
   }
 }
