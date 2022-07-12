@@ -24,8 +24,9 @@ class PaymentManager {
 
   checkAndExecuteSwap = (ledger: M10Ledger) => async (contextId: Uint8Array, txId: Long, transfer: m10.sdk.transaction.ICreateTransfer) => {
     // Validate FX quote
-    const fxMeta = transfer.transferSteps?.flatMap(step => step.metadata).find(metadata => metadata?.type_url == FxQuote.typeName);
+    const fxMeta = transfer.transferSteps?.flatMap(step => step.metadata).find(metadata => metadata?.type_url == FxAgreement.typeName);
     if (fxMeta == null) {
+      this.log.info('No metadata found');
       return;
     }
 
