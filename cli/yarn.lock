@@ -5505,6 +5505,11 @@ yeoman-generator@^5.6.1:
     sort-keys "^4.2.0"
     text-table "^0.2.0"
 
+yesno@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/yesno/-/yesno-0.4.0.tgz#5d674f14d339f0bd4b0edc47f899612c74fcd895"
+  integrity sha512-tdBxmHvbXPBKYIg81bMCB7bVeDmHkRzk5rVJyYYXurwKkHq/MCd8rz4HSJUP7hW0H2NlXiq8IFiWvYKEHhlotA==
+
 yn@3.1.1:
   version "3.1.1"
   resolved "https://registry.npmjs.org/yn/-/yn-3.1.1.tgz"

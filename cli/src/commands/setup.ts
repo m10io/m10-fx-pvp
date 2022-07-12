@@ -22,8 +22,8 @@ export default class Setup extends Command {
 
   static flags = {
     server: Flags.string({char: 's', description: 'M10 Ledger address', required: true}),
-    keyPairPath: Flags.string({char: 'f', description: 'Path to a PKCS8 file'}),
-    keyPair: Flags.string({char: 'k', description: 'Base64 encoded PKCS8'}),
+    keyPairPath: Flags.string({char: 'f', description: 'Path to a PKCS8 file', exclusive: ['keyPair']}),
+    keyPair: Flags.string({char: 'k', description: 'Base64 encoded PKCS8', exclusive: ['keyPairPath']}),
   }
 
   static args = []
