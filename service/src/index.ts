@@ -9,8 +9,8 @@ const log: Logger = new Logger({ displayFilePath: 'hidden' });
 
 const localOperator = process.env.LOCAL_OPERATOR || 'm10';
 const remoteOperator = process.env.LOCAL_OPERATOR || 'm10';
-const localUrl = process.env.LOCAL_LEDGER_URL || 'lowgum.m10.net';
-const remoteUrl = process.env.REMOTE_LEDGER_URL || 'lowgum.m10.net';
+const localUrl = process.env.LOCAL_LEDGER_URL || 'develop.m10.net';
+const remoteUrl = process.env.REMOTE_LEDGER_URL || 'develop.m10.net';
 const localAccountId = process.env.LOCAL_ACCOUNT_ID || '00000000000000000000000000000000'; // USD root @ develop
 const remoteAccountId = process.env.REMOTE_ACCOUNT_ID || '04000000000000000000000000000000'; // EUR root @ develop
 const localKeyPair =
