@@ -5,7 +5,13 @@
 This repository provides a sample PvP coordination service using programmable payments instead of typical blockchain smart contracts.
 The `service` implemented using the `M10 NodeJS SDK` guarantees atomic execution of a Currency A <-> Currency B by using two-staged transfers & actions on the M10 network. Signed quotes can be published to the M10 ledger(s) & will be verified on both ledgers. Only once both parties have successfully created a `Pending transfer`, thereby putting the funds on hold, will the `conditional-payment-manager` complete the swap.
 
-![System overview](./README.png)
+The service can be run as a centralized actor, as depicted below:
+![Centralized](./centralized.png.png)
+
+Or it can be run as a distributed process neighbouring each ledger, as depicted below:
+![Distributed](./distributed.png)
+
+The default service in this repository deploys the `Centralized` model. However by running a single agent in `index.ts` & deploying multiple instances, the `Distributed` model can easily be achieved.
 
 ## Requirements
 
