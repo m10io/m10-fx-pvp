@@ -14,9 +14,11 @@ const remoteUrl = process.env.REMOTE_LEDGER_URL || 'lowgum.m10.net';
 const localAccountId = process.env.LOCAL_ACCOUNT_ID || '00000000000000000000000000000000'; // USD root @ develop
 const remoteAccountId = process.env.REMOTE_ACCOUNT_ID || '04000000000000000000000000000000'; // EUR root @ develop
 const localKeyPair =
-  process.env.localKeyPair || 'MFMCAQEwBQYDK2VwBCIEIPTfjmouJ351G6zHdRRqzvGKPamXNjFb5cIVBN0MmqLAoSMDIQDNiOnzUfVHzu0nUeNeiqR5xXZ6j5YYFL4OWmgeG6qqKQ=='; // Bank admin
+  process.env.LOCAL_KEY_PAIR ||
+  'MFMCAQEwBQYDK2VwBCIEIPTfjmouJ351G6zHdRRqzvGKPamXNjFb5cIVBN0MmqLAoSMDIQDNiOnzUfVHzu0nUeNeiqR5xXZ6j5YYFL4OWmgeG6qqKQ=='; // Bank admin
 const remoteKeyPair =
-  process.env.remoteKeyPair || 'MFMCAQEwBQYDK2VwBCIEIPTfjmouJ351G6zHdRRqzvGKPamXNjFb5cIVBN0MmqLAoSMDIQDNiOnzUfVHzu0nUeNeiqR5xXZ6j5YYFL4OWmgeG6qqKQ=='; // Bank admin
+  process.env.REMOTE_KEY_PAIR ||
+  'MFMCAQEwBQYDK2VwBCIEIPTfjmouJ351G6zHdRRqzvGKPamXNjFb5cIVBN0MmqLAoSMDIQDNiOnzUfVHzu0nUeNeiqR5xXZ6j5YYFL4OWmgeG6qqKQ=='; // Bank admin
 
 const startService = async () => {
   // Create a connection to the local M10 ledger

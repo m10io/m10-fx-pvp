@@ -65,11 +65,11 @@ class M10Ledger {
   async observeTransfers(onTransfer: TransferCallback) {
     this.service?.end();
 
-    const account = await this.client.getAccount(this.keyPair, { id: getUint8ArrayFromAccountId(this.accountId) });
-    const indexedAccount = await this.client.getIndexedAccount(this.keyPair, { id: getUint8ArrayFromAccountId(this.accountId) });
-    this.id = `${indexedAccount.instrument?.code?.toLowerCase()}.${this.operator}`;
+    this.log.info(`Trying to find account ${this.accountId}`);
+    const account = await this.client.getIndexedAccount(this.keyPair, { id: getUint8ArrayFromAccountId(this.accountId) });
+    this.id = `${account.instrument?.code?.toLowerCase()}.${this.operator}`;
     this.log = new Logger({ name: `ledger=${this.id}` });
-    this.log.info(`Owned account: ${account.name} => ${Buffer.from(account.id as Uint8Array).toString('hex')}`);
+    this.log.info(`Owned account: ${account.instrument?.code} => ${Buffer.from(account.id as Uint8Array).toString('hex')}`);
 
     this.log.info(`Observing transfers`);
     const [service, start] = this.client.getObserveTransfers(this.keyPair, {
