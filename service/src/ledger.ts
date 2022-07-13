@@ -1,9 +1,7 @@
 import { LedgerClient } from 'm10-sdk/out/client';
-import { CryptoSigner } from 'm10-sdk/out/utils';
+import { CryptoSigner, getUint8ArrayFromAccountId } from 'm10-sdk/out/utils';
 import { m10 } from 'm10-sdk/protobufs';
 import { Logger } from 'tslog';
-
-const centralBankPublicKey = '1oFEgUWFBVthmUNaaBDEmJB+0hE94+kQiI9Asadyfn4=';
 
 type TransferCallback = (contextId: Uint8Array, txId: Long, transfer: m10.sdk.transaction.ICreateTransfer) => Promise<void>;
 type IFindTransfer = {
@@ -14,20 +12,24 @@ type IFindTransfer = {
 class M10Ledger {
   private log: Logger;
   private client: LedgerClient;
-  private accountId: String;
+  private accountId: string;
   private keyPair: CryptoSigner;
   private service?: m10.sdk.M10QueryService;
-  id: String;
+  private operator: string;
+  id: string;
 
-  constructor(id: string, url: string, accountId: string, keyPair: string) {
-    this.log = new Logger({ name: `ledger=${id}` });
+  constructor(operator: string, url: string, accountId: string, keyPair: string) {
+    this.log = new Logger();
     this.client = new LedgerClient(url, true);
     this.accountId = accountId;
     // NOTE @sadroeck - Prefer to sign via an external vault (e.g. Vault/aws-KMS/..). Fine for demo
     this.keyPair = CryptoSigner.getSignerFromPkcs8V2(keyPair);
-    this.id = id;
+    this.operator = operator;
+    this.id = `unknown.${operator}`;
 
-    this.log.info(`Connecting to M10 ledger id=${this.id} accountId=${this.accountId} publicKey=${this.keyPair.getPublicKey().toString('base64')}`);
+    this.log.info(
+      `Connecting to M10 ledger operator=${this.operator} accountId=${this.accountId} publicKey=${this.keyPair.getPublicKey().toString('base64')}`,
+    );
   }
 
   publicKey(): Buffer {
@@ -36,16 +38,16 @@ class M10Ledger {
 
   async findTransfers(req: IFindTransfer): Promise<m10.sdk.transaction.IFinalizedTransfer[]> {
     if (req.txId != null) {
-      return [await this.client.getTransfer(this.keyPair, { txId: req.txId })];
+      return [await this.client.getTransfer(this.keyPair, req)];
     } else if (req.contextId != null) {
-      const txs = await this.client.listTransfers(this.keyPair, { contextId: req.contextId });
+      const txs = await this.client.listTransfers(this.keyPair, { limit: 10, ...req });
       return txs.transfers ?? [];
     } else {
-      return [];
+      throw 'missing filter for findTransfers';
     }
   }
 
-  async commitTransfer(pendingTxId: number | Long | null, contextId: Uint8Array | undefined): Promise<void> {
+  async commitTransfer(pendingTxId: number, contextId: Uint8Array): Promise<void> {
     const commitTransfer = new m10.sdk.transaction.CommitTransfer({
       pendingTxId,
       newState: m10.sdk.transaction.CommitTransfer.TransferState.ACCEPTED,
@@ -54,7 +56,7 @@ class M10Ledger {
     const transactionRequestPayload = this.client.transactionRequest(transactionData, contextId);
     const response = await this.client.createTransaction(this.keyPair, transactionRequestPayload);
     if (response.error != null) {
-      this.log.fatal(`Could not commit transfer id=${pendingTxId}`);
+      this.log.fatal(`Could not commit transfer id=${pendingTxId}: ${JSON.stringify(response.error)}`);
     }
     return;
   }
@@ -63,24 +65,33 @@ class M10Ledger {
   async observeTransfers(onTransfer: TransferCallback) {
     this.service?.end();
 
-    const centralBankAccounts = (await this.client.listAccounts(this.keyPair, { owner: Buffer.from(centralBankPublicKey, 'base64') })).accounts ?? [];
-    for (const account of centralBankAccounts) {
-      this.log.info(`Owned account: ${account.name} => ${Buffer.from(account.id as Uint8Array).toString('hex')}`);
-    }
+    const account = await this.client.getAccount(this.keyPair, { id: getUint8ArrayFromAccountId(this.accountId) });
+    const indexedAccount = await this.client.getIndexedAccount(this.keyPair, { id: getUint8ArrayFromAccountId(this.accountId) });
+    this.id = `${indexedAccount.instrument?.code?.toLowerCase()}.${this.operator}`;
+    this.log = new Logger({ name: `ledger=${this.id}` });
+    this.log.info(`Owned account: ${account.name} => ${Buffer.from(account.id as Uint8Array).toString('hex')}`);
 
     this.log.info(`Observing transfers`);
     const [service, start] = this.client.getObserveTransfers(this.keyPair, {
-      involvedAccounts: centralBankAccounts?.map(account => account.id as Uint8Array),
+      involvedAccounts: [account.id as Uint8Array],
     });
-    service.on('data', async finalized => {
-      for await (const tx of finalized.transactions) {
+    service.on('data', async (finalized: m10.sdk.IFinalizedTransactions) => {
+      for await (const tx of finalized.transactions ?? []) {
         if (tx.response?.error != null) {
+          this.log.error(`Observed error: ${JSON.stringify(tx.response.error)}`);
           return;
         }
 
         if (tx.request?.data?.initiateTransfer != null) {
           this.log.info(`Transfer initiated  ${tx.response?.txId}`);
-          await onTransfer(tx.request?.contextId || new Uint8Array(0), tx.response.txId, tx.request.data?.initiateTransfer);
+          await onTransfer(tx.request?.contextId || new Uint8Array(0), tx.response?.txId as Long, tx.request.data?.initiateTransfer);
+        } else if (tx.response?.transferCommitted != null) {
+          this.log.info(`Transfer committed ${tx.response?.txId}`);
+          // await onTransfer(
+          //   tx.request?.contextId || new Uint8Array(0),
+          //   tx.request?.data?.commitTransfer?.pendingTxId as Long,
+          //   tx.response.transferCommitted,
+          // );
         }
       }
     });

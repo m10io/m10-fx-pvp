@@ -41,6 +41,7 @@ export default class Quote extends Command {
 
     // Check sender & receiver
     const client = new LedgerClient(flags.ledger, true)
+
     const fromAccount = await client.getIndexedAccount(keyPair, {id: Buffer.from(flags.from, 'hex')})
     this.log(`From: ${JSON.stringify(fromAccount)}`)
     const toAccount = await client.getIndexedAccount(keyPair, {id: Buffer.from(flags.to, 'hex')})
@@ -74,9 +75,11 @@ export default class Quote extends Command {
     const base = FxAmount.create({amount: BigInt(flags.baseAmount), currency: fromCurrency, ledger: `${fromCurrency}.m10`})
     const toCurrency = toAccount.instrument?.code?.toLowerCase()
     const target = FxAmount.create({amount: BigInt(flags.targetAmount), currency: toCurrency, ledger: `${toCurrency}.m10`})
-    const quote = FxQuote.create({base, target})
+    const quote = FxQuote.create({base, target, nonce: BigInt(crypto.randomInt(1 << 30))})
     const serializedQuote = FxQuote.toBinary(quote)
-    const agreement = FxAgreement.create({quote: serializedQuote, signatures: [keyPair.getSignature(serializedQuote)]})
+    const sig = keyPair.getSignature(serializedQuote)
+    const agreement = FxAgreement.create({quote: serializedQuote, signatures: [sig]})
+
     const serializedAgreement = FxAgreement.toBinary(agreement)
     const contextId = crypto
     .createHash('sha256')
@@ -139,7 +142,7 @@ export default class Quote extends Command {
           new m10.sdk.transaction.TransferStep({
             fromAccountId: targetCBAccount?.id,
             toAccountId: toAccount?.id,
-            amount: flags.baseAmount,
+            amount: flags.targetAmount,
             metadata: [new google.protobuf.Any({
               // eslint-disable-next-line camelcase
               type_url: FxAgreement.typeName,
@@ -155,3 +158,4 @@ export default class Quote extends Command {
     }
   }
 }
+
