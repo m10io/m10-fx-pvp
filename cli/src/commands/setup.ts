@@ -12,7 +12,7 @@ import {collections} from 'm10-sdk'
 
 // m10_usd.pkcs8
 const currencyPublicKey = '1oFEgUWFBVthmUNaaBDEmJB+0hE94+kQiI9Asadyfn4='
-const roleName = 'conditional-payment-manager'
+const roleNamePrefix = 'conditional-payment-manager'
 
 export default class Setup extends Command {
   static description = 'Setup the M10-FX identities'
@@ -70,6 +70,7 @@ export default class Setup extends Command {
     ]
 
     /// Check for existing roles
+    const roleName = `${roleNamePrefix}-${pvpKeyPair.getPublicKey().toString('hex')}`
     const roles = await client.listRoles(rootKeyPair, {name: roleName})
     if ((roles.roles?.length ?? 0) > 0) {
       this.error(`Role ${roleName} already exists:\n${JSON.stringify(roles.roles, null, 4)}`)
