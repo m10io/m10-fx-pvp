@@ -15,7 +15,7 @@ The default service in this repository deploys the `Centralized` model. However 
 
 ## Requirements
 
-* [node-js](https://nodejs.org/en/download/)(Expected version "~16")
+* [node-js](https://nodejs.org/en/download/) (Expected version "~16")
 * [yarn](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable)
 * [m10 CLI](https://github.com/m10io/sdk/releases)
 
