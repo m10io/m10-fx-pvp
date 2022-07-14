@@ -21,6 +21,7 @@ export default class Quote extends Command {
   static flags = {
     from: Flags.string({char: 'B', description: 'Sender of the base amount', required: true}),
     to: Flags.string({char: 'T', description: 'Receiver of the target amount', required: true}),
+    publishQuote: Flags.boolean({char: 'p', description: 'Publish the quote to the ledger. Requires TRANSACT permssions', default: false}),
     baseAmount: Flags.integer({char: 'b', description: 'base amount', required: true}),
     targetAmount: Flags.integer({char: 't', description: 'target amount', required: true}),
     ledger: Flags.string({char: 's', description: 'ledger address', required: true}),
@@ -87,22 +88,23 @@ export default class Quote extends Command {
     .digest()
 
     // Publish to ledger
-    const publishAgreement = new m10.sdk.transaction.Action({
-      name: 'm10.fx-agreement',
-      fromAccount: Buffer.from(quotePublisherAccountId, 'hex'),
-      // Note: Target::AnyAccount is not yet published to the SDK, so use relevant observing account
-      target: {accountId: Buffer.from('00000000000000000000000000000000', 'hex')},
-      payload: serializedAgreement,
-    })
-    const transactionData = new m10.sdk.transaction.TransactionData({invokeAction: publishAgreement})
-    const transactionRequestPayload = client.transactionRequest(transactionData, contextId)
-    const response = await client.createTransaction(keyPair, transactionRequestPayload)
-    if (response.error !== null) {
-      this.error(`Could not publish quote: ${JSON.stringify(response.error)}`)
-      return
-    }
+    if (flags.publishQuote) {
+      const publishAgreement = new m10.sdk.transaction.Action({
+        name: 'm10.fx-agreement',
+        fromAccount: Buffer.from(quotePublisherAccountId, 'hex'),
+        // Note: Target::AnyAccount is not yet published to the SDK, so use relevant observing account
+        target: {accountId: Buffer.from('00000000000000000000000000000000', 'hex')},
+        payload: serializedAgreement,
+      })
+      const transactionData = new m10.sdk.transaction.TransactionData({invokeAction: publishAgreement})
+      const transactionRequestPayload = client.transactionRequest(transactionData, contextId)
+      const response = await client.createTransaction(keyPair, transactionRequestPayload)
+      if (response.error !== null) {
+        this.warn(`Could not publish quote: ${JSON.stringify(response.error)}`)
+      }
 
-    this.log(`Published quote as txId=${response.txId}`)
+      this.log(`Published quote as txId=${response.txId}`)
+    }
 
     const executeBase = await yesno({
       question: `Would you like to execute the ${fromCurrency} section?`,
