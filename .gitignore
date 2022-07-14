@@ -128,3 +128,9 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# keys
+*.pkcs8
+
+# Mac garbage
+.DS_Store
