@@ -15,7 +15,7 @@ The default service in this repository deploys the `Centralized` model. However 
 
 ## Requirements
 
-* [node-js](https://nodejs.org/en/download/)
+* [node-js](https://nodejs.org/en/download/)(Expected version "~16")
 * [yarn](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable)
 * [m10 CLI](https://github.com/m10io/sdk/releases)
 
@@ -80,8 +80,8 @@ cd ./cli && yarn build
 # Uses the root key (provided) to initialize the roles & role-bindings
 # Binds the pvp manager role to your pvp manager key
 ./bin/run setup \
- --server=$LOCAL_LEDGER_URL
- --rootKeyPair=$ROOT_KEY_PAIR
+ --server=$LOCAL_LEDGER_URL \
+ --rootKeyPair=$ROOT_KEY_PAIR \
  --pvpKeyPair=$LOCAL_KEY_PAIR
 ```
 
