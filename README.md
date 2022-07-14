@@ -11,13 +11,15 @@ The service can be run as a centralized actor, as depicted below:
 Or it can be run as a distributed process neighbouring each ledger, as depicted below:
 ![Distributed](./distributed.png)
 
-The default service in this repository deploys the `Centralized` model. However by running a single agent in `index.ts` & deploying multiple instances, the `Distributed` model can easily be achieved.
+The default service in this repository deploys the `Centralized` model. However by running a single agent in `index.ts` & deploying multiple instances, the `Distributed` model can easily be achieved.    
+</br>
 
 ## Requirements
 
 * [node-js](https://nodejs.org/en/download/) (Expected version "~16")
 * [yarn](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable)
-* [m10 CLI](https://github.com/m10io/sdk/releases)
+* [m10 CLI](https://github.com/m10io/sdk/releases)   
+</br>
 
 ## Before you begin
 
@@ -29,13 +31,15 @@ m10 create key-pair pvpManager.pkcs8
 
 # Output as Base64 to verify
 base64 pvpManager.pkcs8
-```
+```    
+</br>
 
 ## How to build & prepare for simulation
 
 A distribution-ready pvpManager simulation cli & service can be created using `yarn && yarn build`, within the `cli` or the `service` directories respectively.
 
-Open the repository in two terminal windows and run:
+Open the repository in two terminal windows and run:    
+
 Window 1
 ```sh
 cd cli && yarn && yarn build
@@ -64,7 +68,8 @@ next you will:
 1. Run the `setup` command in the m10-fx-pvp CLI in window 1
 2. Start the pvpManager service(s) in window 2
 3. Initiate the PvP flow with the `quote` command in the m10-fx-pvp CLI in window 1
-4. Observe the execution of flow in window 2
+4. Observe the execution of flow in window 2    
+</br>
 
 ## m10-fx-pvp CLI setup in window 1
 
@@ -83,10 +88,10 @@ cd ./cli && yarn build
  --server=$LOCAL_LEDGER_URL \
  --rootKeyPair=$ROOT_KEY_PAIR \
  --pvpKeyPair=$LOCAL_KEY_PAIR
-```
+```    
+</br>
 
 ## Run the service in window 2
-
 
 ```sh
 # Navigate to the service folder and ensure it is built:
@@ -97,7 +102,8 @@ yarn start
 ```
 
 The key pairs are a priviledged keypairs previously created & bound to the `conditional-payment-manager` role on each ledger.
-These were given the appropriate RBAC permission with the `setup` command in the `cli` above.
+These were given the appropriate RBAC permission with the `setup` command in the `cli` above.    
+</br>
 
 ## m10-fx-pvp CLI quote command in window 1
 
@@ -114,7 +120,8 @@ Initializing & executing a quote can be done interactively through the `quote` c
  --targetAmount=91
 ```
 
-This will execute a swap for 100 of the currency held by account ID `00000000000000000000000000000001` vs 91 of the currency held by account ID `04000000000000000000000000000001`
+This will execute a swap for 100 of the currency held by account ID `00000000000000000000000000000001` vs 91 of the currency held by account ID `04000000000000000000000000000001`    
+</br>
 
 ## Observe the completion of the flow in window 1
 
