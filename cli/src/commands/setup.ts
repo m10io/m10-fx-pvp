@@ -53,19 +53,28 @@ export default class Setup extends Command {
 
     /// RBAC rules
     const rules: m10.sdk.Rule[] = [
-      /// Allows reading & committing transfers on transfers between bank accounts
-      /// Note: @sadroeck - Can be limited to CB & List of appropriate banks
+      /// Allows reading account data for all CB accounts
       new m10.sdk.Rule({
         collection: 'ledger-accounts',
-        verbs: [m10.sdk.Rule.Verb.READ, m10.sdk.Rule.Verb.COMMIT],
+        verbs: [m10.sdk.Rule.Verb.READ],
         instanceKeys: bankAccounts?.map(account =>
           new m10.sdk.Value({bytesValue: account.id})),
       }),
       new m10.sdk.Rule({
         collection: collections.Collection.Account,
-        verbs: [m10.sdk.Rule.Verb.READ, m10.sdk.Rule.Verb.COMMIT],
+        verbs: [m10.sdk.Rule.Verb.READ],
         instanceKeys: bankAccounts?.map(account =>
           new m10.sdk.Value({bytesValue: account.id})),
+      }),
+      // Allows commit on all accounts
+      /// Note: @sadroeck - Can be limited to CB & List of appropriate banks
+      new m10.sdk.Rule({
+        collection: 'ledger-accounts',
+        verbs: [m10.sdk.Rule.Verb.COMMIT],
+      }),
+      new m10.sdk.Rule({
+        collection: collections.Collection.Account,
+        verbs: [m10.sdk.Rule.Verb.COMMIT],
       }),
     ]
 
